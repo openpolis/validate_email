@@ -126,7 +126,7 @@ def validate_email(email, check_mx=False,verify=False):
                     break
                 except smtplib.SMTPConnectError:
                     continue
-    except (AssertionError, dns.resolver.NXDOMAIN):
+    except (AssertionError, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
         return False
     return True
 
