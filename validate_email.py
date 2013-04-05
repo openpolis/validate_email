@@ -20,13 +20,14 @@
 import re
 import smtplib
 import socket
+import dns.resolver
 
-try:
-    import DNS
-    ServerError = DNS.ServerError
-except:
-    DNS = None
-    class ServerError(Exception): pass
+# try:
+#     import DNS
+#     ServerError = DNS.ServerError
+# except:
+#     DNS = None
+#     class ServerError(Exception): pass
 # All we are really doing is comparing the input string to one
 # gigantic regular expression.  But building that regexp, and
 # ensuring its correctness, is made much easier by assembling it
@@ -81,6 +82,10 @@ ADDR_SPEC = LOCAL_PART + r'@' + DOMAIN               # see 3.4.1
 # A valid address will match exactly the 3.4.1 addr-spec.
 VALID_ADDRESS_REGEXP = '^' + ADDR_SPEC + '$'
 
+cache = {}
+print 'initialize cache'
+
+
 def validate_email(email, check_mx=False,verify=False):
 
     """Indicate whether the given string is a valid email address
@@ -90,18 +95,25 @@ def validate_email(email, check_mx=False,verify=False):
     depend on circular definitions in the spec may not pass, but in
     general this should correctly identify any email address likely
     to be in use as of 2011."""
+
+    global cache
+
     try:
         assert re.match(VALID_ADDRESS_REGEXP, email) is not None
         check_mx |= verify
         if check_mx:
-            if not DNS: raise Exception('For check the mx records or check if the email exists you must have installed pyDNS python package')
-            DNS.DiscoverNameServers()
-            hostname = email[email.find('@')+1:]
-            mx_hosts = DNS.mxlookup(hostname)
+
+            hostname = email[email.find('@') + 1:]
+            if hostname in cache:
+                mx_hosts = cache[hostname]
+            else:
+                print 'new mx host %s' % hostname
+                cache[hostname] = mx_hosts = dns.resolver.query(hostname, 'MX')
+
             for mx in mx_hosts:
                 try:
                     smtp = smtplib.SMTP()
-                    smtp.connect(mx[1])
+                    smtp.connect(mx.exchange.to_text())
                     if not verify: return True
                     status, _ = smtp.helo()
                     if status != 250: continue
@@ -113,7 +125,7 @@ def validate_email(email, check_mx=False,verify=False):
                     break
                 except smtplib.SMTPConnectError:
                     continue
-    except (AssertionError, ServerError): 
+    except (AssertionError, dns.resolver.NXDOMAIN):
         return False
     return True
 
