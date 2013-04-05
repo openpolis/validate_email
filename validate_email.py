@@ -106,7 +106,10 @@ def validate_email(email, check_mx=False,verify=False):
             if hostname in cache:
                 mx_hosts = cache[hostname]
             else:
-                cache[hostname] = mx_hosts = dns.resolver.query(hostname, 'MX')
+                try:
+                    cache[hostname] = mx_hosts = dns.resolver.query(hostname, 'MX')
+                except dns.exception.Timeout:
+                    return False
 
             for mx in mx_hosts:
                 try:

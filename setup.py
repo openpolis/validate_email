@@ -11,4 +11,7 @@ setup(name='validate_email',
       keywords = 'email validation verification mx verify',
       url = 'http://github.com/openpolis/validate_email',
       license = 'LGPL',
-    )
+      install_requires = [
+          "dnspython==1.10.0",
+      ]
+)
