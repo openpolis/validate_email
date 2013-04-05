@@ -83,7 +83,6 @@ ADDR_SPEC = LOCAL_PART + r'@' + DOMAIN               # see 3.4.1
 VALID_ADDRESS_REGEXP = '^' + ADDR_SPEC + '$'
 
 cache = {}
-print 'initialize cache'
 
 
 def validate_email(email, check_mx=False,verify=False):
@@ -107,7 +106,6 @@ def validate_email(email, check_mx=False,verify=False):
             if hostname in cache:
                 mx_hosts = cache[hostname]
             else:
-                print 'new mx host %s' % hostname
                 cache[hostname] = mx_hosts = dns.resolver.query(hostname, 'MX')
 
             for mx in mx_hosts:
