@@ -111,7 +111,10 @@ def validate_email(email, check_mx=False,verify=False):
             for mx in mx_hosts:
                 try:
                     smtp = smtplib.SMTP()
-                    smtp.connect(mx.exchange.to_text())
+                    try:
+                        smtp.connect(mx.exchange.to_text())
+                    except socket.error:
+                        continue
                     if not verify: return True
                     status, _ = smtp.helo()
                     if status != 250: continue
